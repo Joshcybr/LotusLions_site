@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-gray-800 px-6 py-4 flex justify-between items-center shadow-md">
+    <h1 class="text-xl font-bold text-white">Lotus Lions Admin</h1>
+    <div class="flex items-center space-x-6">
+      <a href="index.html" class="text-white hover:text-blue-400 font-semibold transition">Home</a>
+      <a href="schedule.html" class="text-white hover:text-blue-400 font-semibold transition">Schedule</a>
+      <button onclick="logout()" class="text-white hover:text-red-400 font-semibold transition">Logout</button>
+    </div>
+  </nav>
+
+  <main class="flex-grow container mx-auto py-10 px-4 space-y-16">
+
+    <!-- Section: Set Player of the Match -->
+    <section class="bg-gray-800 p-8 rounded-lg shadow-lg max-w-xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-center">Set Player of the Match</h2>
+      <form id="potmForm" class="space-y-4">
+        <!-- Dropdown for player selection -->
+        <select id="playerSelect" class="w-full p-2 rounded bg-gray-700 text-white" required>
+          <option value="" disabled selected>Select a player</option>
+
+          <option value='{"name":"Brian Manewyk","image":"image/Brain.jpg"}'>Brian Manewyk</option>
+          <option value='{"name":"Jevonne Badenhorst","image":"image/Jev.jpg"}'>Jevonne Badenhorst</option>
+          <option value='{"name":"Ansaar","image":"image/ansaar.jpg"}'>Ansaar</option>
+          <option value='{"name":"Laeeq Abrahams","image":"image/laeeq.jpg"}'>Laeeq Abrahams</option>
+          <option value='{"name":"Likhona Ncameleni","image":"image/Liks.jpg"}'>Likhona Ncameleni</option>
+          <option value='{"name":"Shakeel Davids","image":"image/Shakeel.jpg"}'>Shakeel Davids</option>
+          <option value='{"name":"Xavier van der Ross","image":"image/xavi.jpg"}'>Xavier van der Ross</option>
+          <option value='{"name":"Caleb Rhode","image":"image/Pot.jpg"}'>Caleb Rhode</option>
+          <option value='{"name":"Thaafir","image":"image/Bekko.jpg"}'>Thaafir</option>
+        </select>
+
+        <!-- Hidden fields auto-filled from dropdown -->
+        <input type="hidden" id="potmName" name="potmName">
+        <input type="hidden" id="potmImage" name="potmImage">
+
+        <!-- Textarea for entering player stats -->
+        <textarea id="potmStats" placeholder="Player Stats or Description" class="w-full p-2 rounded bg-gray-700 text-white" required></textarea>
+
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded w-full">Save Player</button>
+      </form>
+      <p id="saveMsg" class="text-green-400 mt-4 hidden text-center">✅ Player of the Match updated! Redirecting...</p>
+    </section>
+
+    <!-- Section: Add Upcoming Match -->
+    <section class="bg-gray-800 p-8 rounded-lg shadow-lg max-w-xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-center">Add Upcoming Match</h2>
+      <form id="matchForm" class="space-y-4">
+        <!-- Input for opponent name -->
+        <input type="text" id="opponent" placeholder="Opponent Name" class="w-full p-2 rounded bg-gray-700 text-white" required>
+        
+        <!-- Date and time inputs -->
+        <div class="flex gap-4">
+          <input type="date" id="matchDate" class="flex-1 p-2 rounded bg-gray-700 text-white" required>
+          <input type="time" id="matchTime" class="flex-1 p-2 rounded bg-gray-700 text-white" required>
+        </div>
+
+        <!-- Input for match location -->
+        <input type="text" id="location" placeholder="Match Location" class="w-full p-2 rounded bg-gray-700 text-white" required>
+
+        <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full">Add Match</button>
+      </form>
+      <p id="matchMsg" class="text-green-400 mt-4 hidden text-center">✅ Match added successfully!</p>
+    </section>
+
+    <!-- Section: List of matches -->
+    <section class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-4 text-center">Manage Scheduled Matches</h2>
+      <div id="matchList" class="space-y-4"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 py-6 px-6 text-center text-sm text-gray-400">
+    <div class="flex justify-center space-x-6 mb-2">
+      <a href="https://instagram.com" target="_blank" class="hover:text-pink-500">Instagram</a>
+      <a href="https://facebook.com" target="_blank" class="hover:text-blue-500">Facebook</a>
+      <a href="https://youtube.com" target="_blank" class="hover:text-red-500">YouTube</a>
+    </div>
+    <p>© 2025 Lotus Lions Volleyball Club. All rights reserved.</p>
+    <p><a href="login.html" class="hover:text-blue-400 font-semibold">Admin Log in</a></p>
+  </footer>
+
+  <!-- I added all the J scripts here neh , so feel free to put it in it sown folder -->
+  <script>
+    // Form elements
+    const form = document.getElementById('potmForm');
+    const msg = document.getElementById('saveMsg');
+    const matchForm = document.getElementById('matchForm');
+    const matchMsg = document.getElementById('matchMsg');
+    const matchList = document.getElementById('matchList');
+    let editingIndex = null; // To track which match is being edited
+
+    // Handle POTM form submission
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const potmData = {
+        name: document.getElementById('potmName').value,
+        image: document.getElementById('potmImage').value,
+        stats: document.getElementById('potmStats').value
+      };
+      localStorage.setItem('playerOfTheMatch', JSON.stringify(potmData));
+      msg.classList.remove('hidden');
+      form.reset();
+      setTimeout(() => window.location.href = 'index.html', 2500);
+    });
+
+    // Handle match form submission (add or edit)
+    matchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const matchDate = document.getElementById('matchDate').value;
+      const matchTime = document.getElementById('matchTime').value;
+      const dateTime = matchDate + 'T' + matchTime;
+
+      const match = {
+        opponent: document.getElementById('opponent').value,
+        dateTime: dateTime,
+        location: document.getElementById('location').value
+      };
+
+      let matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
+
+      if (editingIndex !== null) {
+        // Update existing match
+        matches[editingIndex] = match;
+        editingIndex = null;
+      } else {
+        // Add new match
+        matches.push(match);
+      }
+
+      localStorage.setItem('matchSchedule', JSON.stringify(matches));
+      matchMsg.classList.remove('hidden');
+      matchForm.reset();
+      loadMatches();
+    });
+
+    // Display matches in the list
+    function loadMatches() {
+      matchList.innerHTML = "";
+      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
+
+      matches.forEach((match, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-gray-800 p-4 rounded shadow flex justify-between items-center";
+        div.innerHTML = `
+          <div>
+            <h3 class="text-lg font-semibold">Lotus Lions vs ${match.opponent}</h3>
+            <p class="text-sm">📍 ${match.location} | 🕒 ${formatDateTime(match.dateTime)}</p>
+          </div>
+          <div class="space-x-2">
+            <button onclick="editMatch(${index})" class="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded">Edit</button>
+            <button onclick="deleteMatch(${index})" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Delete</button>
+          </div>
+        `;
+        matchList.appendChild(div);
+      });
+    }
+
+    // Format date and time nicely
+    function formatDateTime(dateTimeStr) {
+      const date = new Date(dateTimeStr);
+      return date.toLocaleString("en-GB", {
+        weekday: "long",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    // Load match data into form for editing
+    function editMatch(index) {
+      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
+      const match = matches[index];
+      document.getElementById('opponent').value = match.opponent;
+
+      const dt = new Date(match.dateTime);
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth() + 1).padStart(2, '0');
+      const dd = String(dt.getDate()).padStart(2, '0');
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const min = String(dt.getMinutes()).padStart(2, '0');
+
+      document.getElementById('matchDate').value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('matchTime').value = `${hh}:${min}`;
+      document.getElementById('location').value = match.location;
+      editingIndex = index;
+      matchMsg.classList.add('hidden');
+    }
+
+    // Delete a match from the list
+    function deleteMatch(index) {
+      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
+      matches.splice(index, 1);
+      localStorage.setItem('matchSchedule', JSON.stringify(matches));
+      loadMatches();
+    }
+
+    // Log out user
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      window.location.href = 'login.html';
+    }
+
+    // Populate hidden POTM fields when a player is selected
+    document.getElementById('playerSelect').addEventListener('change', function () {
+      const selectedData = JSON.parse(this.value);
+      document.getElementById('potmName').value = selectedData.name;
+      document.getElementById('potmImage').value = selectedData.image;
+    });
+
+    // Initial call to load existing matches
+    loadMatches();
+  </script>
+
+</body>
+</html>
