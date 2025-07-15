@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.href = 'login.html';
@@ -40,15 +40,15 @@
           <option value='{"name":"Shakeel Davids","image":"image/Shakeel.jpg"}'>Shakeel Davids</option>
           <option value='{"name":"Xavier van der Ross","image":"image/xavi.jpg"}'>Xavier van der Ross</option>
           <option value='{"name":"Caleb Rhode","image":"image/Pot.jpg"}'>Caleb Rhode</option>
-         <option value='{"name":"Daniel ","image":"image/daniel.jpg"}'>Daniel Martin</option>
+          <option value='{"name":"Daniel","image":"image/daniel.jpg"}'>Daniel Martin</option>
           <option value='{"name":"Tyrone","image":"image/tyrone.jpg"}'>Tyrone Brown</option>
           <option value='{"name":"tashreeq","image":"image/tashreeq.jpg"}'>Tashreeq</option>
           <option value='{"name":"Jordan","image":"image/jordan.jpg"}'>Jordan Moeses</option>
           <option value='{"name":"Thaafir","image":"image/Bekko.jpg"}'>Thaafir Bekko</option>
         </select>
 
-        <input type="hidden" id="potmName">
-        <input type="hidden" id="potmImage">
+        <input type="hidden" id="potmName" />
+        <input type="hidden" id="potmImage" />
 
         <textarea id="potmStats" placeholder="Player Stats or Description" class="w-full p-2 rounded bg-gray-700 text-white" required></textarea>
 
@@ -57,51 +57,55 @@
       <p id="saveMsg" class="text-green-400 mt-4 hidden text-center">✅ Player of the Match updated! Redirecting...</p>
     </section>
 
-    <!-- Section: Add Upcoming Match -->
+    <!-- Section: Add/Edit Upcoming Match -->
     <section class="bg-gray-800 p-8 rounded-lg shadow-lg max-w-xl mx-auto">
-      <h2 class="text-3xl font-bold mb-6 text-center">Add Upcoming Match</h2>
+      <h2 id="formTitle" class="text-3xl font-bold mb-6 text-center">Add Upcoming Match</h2>
       <form id="matchForm" class="space-y-4">
-        <input type="text" id="opponent" placeholder="Opponent Name" class="w-full p-2 rounded bg-gray-700 text-white" required>
-
+        <input type="text" id="opponent" placeholder="Opponent Name" class="w-full p-2 rounded bg-gray-700 text-white" required />
         <div class="flex gap-4">
-          <input type="date" id="matchDate" class="flex-1 p-2 rounded bg-gray-700 text-white" required>
-          <input type="time" id="matchTime" class="flex-1 p-2 rounded bg-gray-700 text-white" required>
+          <input type="date" id="matchDate" class="flex-1 p-2 rounded bg-gray-700 text-white" required />
+          <input type="time" id="matchTime" class="flex-1 p-2 rounded bg-gray-700 text-white" required />
         </div>
+        <input type="text" id="location" placeholder="Match Location" class="w-full p-2 rounded bg-gray-700 text-white" required />
 
-        <input type="text" id="location" placeholder="Match Location" class="w-full p-2 rounded bg-gray-700 text-white" required>
-
-        <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full">Add Match</button>
+        <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full" id="submitBtn">Add Match</button>
+        <button type="button" id="cancelEditBtn" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded w-full hidden">Cancel Edit</button>
       </form>
-      <p id="matchMsg" class="text-green-400 mt-4 hidden text-center">✅ Match added successfully!</p>
+      <p id="matchMsg" class="text-green-400 mt-4 hidden text-center"></p>
     </section>
 
     <!-- Section: List of matches -->
     <section class="max-w-3xl mx-auto">
-      <h2 class="text-2xl font-semibold mb-4 text-center">Manage Scheduled Matches</h2>
+      <h2 class="text-2xl font-semibold mb-4 text-center">Scheduled Matches</h2>
       <div id="matchList" class="space-y-4"></div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="bg-gray-800 py-6 px-6 text-center text-sm text-gray-400">
-    <div class="flex justify-center space-x-6 mb-2">
-      <a href="https://instagram.com" target="_blank" class="hover:text-pink-500">Instagram</a>
-      <a href="https://facebook.com" target="_blank" class="hover:text-blue-500">Facebook</a>
-      <a href="https://youtube.com" target="_blank" class="hover:text-red-500">YouTube</a>
-    </div>
     <p>© 2025 Lotus Lions Volleyball Club. All rights reserved.</p>
     <p><a href="login.html" class="hover:text-blue-400 font-semibold">Admin Log in</a></p>
   </footer>
 
   <script>
-    const form = document.getElementById('potmForm');
-    const msg = document.getElementById('saveMsg');
+    const supabase = window.supabase.createClient(
+      "https://qbnaecujbshbkritaddj.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFibmFlY3VqYnNoYmtyaXRhZGRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMjQwNTEsImV4cCI6MjA2NDcwMDA1MX0.Bbf9OTqEd3PkWA-sIUsVH23xWYjpF8JAN3dKAny0TVs"
+    );
+
+    const potmForm = document.getElementById('potmForm');
+    const saveMsg = document.getElementById('saveMsg');
     const matchForm = document.getElementById('matchForm');
     const matchMsg = document.getElementById('matchMsg');
     const matchList = document.getElementById('matchList');
-    let editingIndex = null;
+    const formTitle = document.getElementById('formTitle');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-    form.addEventListener('submit', function(e) {
+    // Store current editing match id (null when adding)
+    let editingMatchId = null;
+
+    // Player of the Match form
+    potmForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const potmData = {
         name: document.getElementById('potmName').value,
@@ -109,103 +113,191 @@
         stats: document.getElementById('potmStats').value
       };
       localStorage.setItem('playerOfTheMatch', JSON.stringify(potmData));
-      msg.classList.remove('hidden');
-      form.reset();
+      saveMsg.classList.remove('hidden');
+      potmForm.reset();
       setTimeout(() => window.location.href = 'index.html', 2500);
     });
 
-    matchForm.addEventListener('submit', function(e) {
+    // Match form submit (Add or Update)
+    matchForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const opponent = document.getElementById('opponent').value.trim();
       const matchDate = document.getElementById('matchDate').value;
       const matchTime = document.getElementById('matchTime').value;
-      const dateTime = matchDate + 'T' + matchTime;
+      const location = document.getElementById('location').value.trim();
 
-      const match = {
-        opponent: document.getElementById('opponent').value,
-        dateTime: dateTime,
-        location: document.getElementById('location').value
-      };
-
-      let matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
-
-      if (editingIndex !== null) {
-        matches[editingIndex] = match;
-        editingIndex = null;
-      } else {
-        matches.push(match);
+      if (!opponent || !matchDate || !matchTime || !location) {
+        matchMsg.textContent = "❌ Please fill in all fields.";
+        matchMsg.classList.remove('hidden');
+        return;
       }
 
-      localStorage.setItem('matchSchedule', JSON.stringify(matches));
+      const game_date = matchDate + 'T' + matchTime;
+
+      if (editingMatchId) {
+        // Update existing match
+        const { error } = await supabase
+          .from('scheduled_games')
+          .update({ opponent, game_date, location })
+          .eq('id', editingMatchId);
+
+        if (error) {
+          matchMsg.textContent = "❌ Error updating match.";
+          matchMsg.classList.remove('hidden');
+          console.error(error);
+          return;
+        }
+
+        matchMsg.textContent = "✅ Match updated successfully!";
+      } else {
+        // Insert new match
+        const { error } = await supabase
+          .from('scheduled_games')
+          .insert([{ opponent, game_date, location }]);
+
+        if (error) {
+          matchMsg.textContent = "❌ Error saving match.";
+          matchMsg.classList.remove('hidden');
+          console.error(error);
+          return;
+        }
+
+        matchMsg.textContent = "✅ Match added successfully!";
+      }
+
       matchMsg.classList.remove('hidden');
-      matchForm.reset();
+      resetForm();
       loadMatches();
     });
 
-    function loadMatches() {
-      matchList.innerHTML = "";
-      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
-      matches.forEach((match, index) => {
+    // Cancel edit resets form
+    cancelEditBtn.addEventListener('click', () => {
+      resetForm();
+    });
+
+    // Load matches and display with Edit & Delete buttons
+    async function loadMatches() {
+      matchList.innerHTML = '';
+      const { data: matches, error } = await supabase
+        .from('scheduled_games')
+        .select('*')
+        .order('game_date', { ascending: true });
+
+      if (error) {
+        matchList.innerHTML = "<p class='text-red-400'>Error loading matches.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!matches || matches.length === 0) {
+        matchList.innerHTML = "<p class='text-gray-400 text-center'>No matches scheduled yet.</p>";
+        return;
+      }
+
+      matches.forEach(match => {
+        const dateObj = new Date(match.game_date);
+        const formattedDate = dateObj.toLocaleString("en-GB", {
+          weekday: "long",
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
         const div = document.createElement('div');
         div.className = "bg-gray-800 p-4 rounded shadow flex justify-between items-center";
+
         div.innerHTML = `
           <div>
-            <h3 class="font-semibold">vs ${match.opponent}</h3>
-            <p class="text-sm text-gray-300">${formatDateTime(match.dateTime)}</p>
+            <h3 class="font-semibold text-lg">vs ${match.opponent}</h3>
+            <p class="text-sm text-gray-300">${formattedDate}</p>
             <p class="text-sm text-gray-300">${match.location}</p>
           </div>
           <div class="space-x-2">
-            <button onclick="editMatch(${index})" class="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded">Edit</button>
-            <button onclick="deleteMatch(${index})" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Delete</button>
+            <button class="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-sm font-semibold" data-id="${match.id}" onclick="editMatch(${match.id})">Edit</button>
+            <button class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm font-semibold" data-id="${match.id}" onclick="deleteMatch(${match.id})">Delete</button>
           </div>
         `;
         matchList.appendChild(div);
       });
     }
 
-    function formatDateTime(dateTimeStr) {
-      const date = new Date(dateTimeStr);
-      return date.toLocaleString("en-GB", {
-        weekday: "long",
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
+    // Edit match: populate form with selected match data
+    async function editMatch(id) {
+      const { data: match, error } = await supabase
+        .from('scheduled_games')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    function editMatch(index) {
-      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
-      const match = matches[index];
-      const dt = new Date(match.dateTime);
+      if (error) {
+        alert("Error fetching match details.");
+        console.error(error);
+        return;
+      }
+
+      editingMatchId = id;
+      formTitle.textContent = "Edit Match";
+      submitBtn.textContent = "Update Match";
+      cancelEditBtn.classList.remove('hidden');
+
       document.getElementById('opponent').value = match.opponent;
-      document.getElementById('matchDate').value = dt.toISOString().slice(0, 10);
-      document.getElementById('matchTime').value = dt.toISOString().slice(11, 16);
+
+      const date = new Date(match.game_date);
+      // Format date and time for inputs (yyyy-mm-dd and HH:MM)
+      document.getElementById('matchDate').value = date.toISOString().slice(0, 10);
+      document.getElementById('matchTime').value = date.toTimeString().slice(0, 5);
+
       document.getElementById('location').value = match.location;
-      editingIndex = index;
       matchMsg.classList.add('hidden');
     }
 
-    function deleteMatch(index) {
-      const matches = JSON.parse(localStorage.getItem('matchSchedule')) || [];
-      matches.splice(index, 1);
-      localStorage.setItem('matchSchedule', JSON.stringify(matches));
+    // Delete match confirmation and deletion
+    async function deleteMatch(id) {
+      if (!confirm("Are you sure you want to delete this match?")) return;
+
+      const { error } = await supabase
+        .from('scheduled_games')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert("Error deleting match.");
+        console.error(error);
+        return;
+      }
+
       loadMatches();
     }
 
+    // Reset form to Add mode
+    function resetForm() {
+      editingMatchId = null;
+      formTitle.textContent = "Add Upcoming Match";
+      submitBtn.textContent = "Add Match";
+      cancelEditBtn.classList.add('hidden');
+      matchForm.reset();
+      matchMsg.classList.add('hidden');
+    }
+
+    // Logout
     function logout() {
       localStorage.removeItem('isLoggedIn');
       window.location.href = 'login.html';
     }
 
+    // Player select change to update hidden inputs
     document.getElementById('playerSelect').addEventListener('change', function() {
       const selectedData = JSON.parse(this.value);
       document.getElementById('potmName').value = selectedData.name;
       document.getElementById('potmImage').value = selectedData.image;
     });
 
+    // Initial load
     loadMatches();
+
   </script>
 </body>
-
 </html>

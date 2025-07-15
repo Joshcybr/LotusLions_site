@@ -43,9 +43,9 @@
 
   <script>
     // Initialize Supabase
-     const supabaseUrl ="https://qbnaecujbshbkritaddj.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFibmFlY3VqYnNoYmtyaXRhZGRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMjQwNTEsImV4cCI6MjA2NDcwMDA1MX0.Bbf9OTqEd3PkWA-sIUsVH23xWYjpF8JAN3dKAny0TVs";  
-   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = "https://qbnaecujbshbkritaddj.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFibmFlY3VqYnNoYmtyaXRhZGRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMjQwNTEsImV4cCI6MjA2NDcwMDA1MX0.Bbf9OTqEd3PkWA-sIUsVH23xWYjpF8JAN3dKAny0TVs";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     async function loadSchedule() {
       const { data: matches, error } = await supabase
@@ -82,7 +82,7 @@
         item.className = "grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-800 p-4 rounded shadow-lg text-center";
         item.innerHTML = `
           <div class="text-lg font-semibold">vs <span class="text-blue-400">${match.opponent}</span></div>
-          <div class="text-sm text-gray-300">${match.location} (${match.is_home_game ? 'Home' : 'Away'})</div>
+          <div class="text-sm text-gray-300">${match.location}</div>
           <div class="text-sm text-gray-400">${formattedDate}</div>
         `;
         scheduleList.appendChild(item);
